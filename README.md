@@ -1,7 +1,10 @@
 # RestfulApiPostgresql
 crud restful api which working with postgresql using jdbc 
 
+
+
 /persons :
+
     GET:
         1)/             			return each Person from DB with attached apartments
         2)/{id}         			return person by id
@@ -22,6 +25,8 @@ crud restful api which working with postgresql using jdbc
 
 
 /apartments :
+
+
     GET: 
 	1)/					return each Apartment from DB with attached persons
 	2)/{id}					return apartment by id
