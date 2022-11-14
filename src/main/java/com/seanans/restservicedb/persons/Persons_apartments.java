@@ -1,10 +1,12 @@
 package com.seanans.restservicedb.persons;
 
-public class Persons_apartments {
-    private long personId;
-    private long apartmentId;
+import java.util.UUID;
 
-    public Persons_apartments(long personId, long apartmentId) {
+public class Persons_apartments {
+    private UUID personId;
+    private UUID apartmentId;
+
+    public Persons_apartments(UUID personId, UUID apartmentId) {
         this.personId = personId;
         this.apartmentId = apartmentId;
     }
@@ -12,19 +14,19 @@ public class Persons_apartments {
     public Persons_apartments() {
     }
 
-    public long getPersonId() {
+    public UUID getPersonId() {
         return personId;
     }
 
-    public void setPersonId(long personId) {
+    public void setPersonId(UUID personId) {
         this.personId = personId;
     }
 
-    public long getApartmentId() {
+    public UUID getApartmentId() {
         return apartmentId;
     }
 
-    public void setApartmentId(long apartmentId) {
+    public void setApartmentId(UUID apartmentId) {
         this.apartmentId = apartmentId;
     }
 }

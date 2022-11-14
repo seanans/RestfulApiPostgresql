@@ -2,11 +2,11 @@ package com.seanans.restservicedb.persons;
 
 public class PersonCount {
     private String name;
-    private long count;
+    private long countOfApartments;
 
-    public PersonCount(String name, long count) {
+    public PersonCount(String name, long countOfApartments) {
         this.name = name;
-        this.count = count;
+        this.countOfApartments = countOfApartments;
     }
 
     public PersonCount() {
@@ -20,11 +20,11 @@ public class PersonCount {
         this.name = name;
     }
 
-    public long getCount() {
-        return count;
+    public long getCountOfApartments() {
+        return countOfApartments;
     }
 
-    public void setCount(long count) {
-        this.count = count;
+    public void setCountOfApartments(long countOfApartments) {
+        this.countOfApartments = countOfApartments;
     }
 }

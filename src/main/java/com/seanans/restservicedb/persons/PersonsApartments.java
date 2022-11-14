@@ -1,14 +1,15 @@
 package com.seanans.restservicedb.persons;
 
 import java.util.List;
+import java.util.UUID;
 
 public class PersonsApartments {
 
     private String name;
     private String surname;
-    private List<Long> apartmentIds;
+    private List<UUID> apartmentIds;
 
-    public PersonsApartments(String name, String surname, List<Long> personsApartment) {
+    public PersonsApartments(String name, String surname, List<UUID> personsApartment) {
         this.name = name;
         this.surname = surname;
         this.apartmentIds = personsApartment;
@@ -33,11 +34,11 @@ public class PersonsApartments {
         this.surname = surname;
     }
 
-    public List<Long> getPersonsApartment() {
+    public List<UUID> getPersonsApartment() {
         return apartmentIds;
     }
 
-    public void setPersonsApartment(List<Long> personsApartment) {
+    public void setPersonsApartment(List<UUID> personsApartment) {
         this.apartmentIds = personsApartment;
     }
 }

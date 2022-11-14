@@ -1,22 +1,28 @@
 package com.seanans.restservicedb.apartments;
 
 import java.util.List;
+import java.util.UUID;
 
 public class Apartment {
 
-    private long id;
+    private UUID id;
     private long area;
     private String address;
 
 
-    public Apartment(long id, long area, String address) {
+    public Apartment(long area, String address) {
+        this.area = area;
+        this.address = address;
+    }
+
+    public Apartment(UUID id, long area, String address) {
         this.id = id;
         this.area = area;
         this.address = address;
     }
-    private List<Long> personsIds;
+    private List<UUID> personsIds;
 
-    public Apartment(long id, long area, String address, List<Long> personsIds) {
+    public Apartment(UUID id, long area, String address, List<UUID> personsIds) {
         this.id = id;
         this.area = area;
         this.address = address;
@@ -26,11 +32,11 @@ public class Apartment {
     public Apartment() {
     }
 
-    public long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -50,11 +56,11 @@ public class Apartment {
         this.address = address;
     }
 
-    public List<Long> getPersonsIds() {
+    public List<UUID> getPersonsIds() {
         return personsIds;
     }
 
-    public void setPersonsIds(List<Long> personsIds) {
+    public void setPersonsIds(List<UUID> personsIds) {
         this.personsIds = personsIds;
     }
 }

@@ -1,32 +1,33 @@
 package com.seanans.restservicedb.apartments;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ApartmentBindList {
-    private long apartmentId;
-    private List<Long> personsId;
+    private UUID apartmentId;
+    private List<UUID> personsIds;
 
-    public ApartmentBindList(long apartmentId, List<Long> personsId) {
+    public ApartmentBindList(UUID apartmentId, List<UUID> personsIds) {
         this.apartmentId = apartmentId;
-        this.personsId = personsId;
+        this.personsIds = personsIds;
     }
 
     public ApartmentBindList() {
     }
 
-    public long getApartmentId() {
+    public UUID getApartmentId() {
         return apartmentId;
     }
 
-    public void setApartmentId(long apartmentId) {
+    public void setApartmentId(UUID apartmentId) {
         this.apartmentId = apartmentId;
     }
 
-    public List<Long> getPersonsId() {
-        return personsId;
+    public List<UUID> getPersonsIds() {
+        return personsIds;
     }
 
-    public void setPersonsId(List<Long> personsId) {
-        this.personsId = personsId;
+    public void setPersonsIds(List<UUID> personsIds) {
+        this.personsIds = personsIds;
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,18 +31,13 @@ public class PersonDataService {
                 ORDER BY persons.id ASC;
                 """;
         List<Person> localPersonList = jdbcTemplate.query(sql, (resultSet, i) -> new Person(
-                resultSet.getLong("personId"),
+                resultSet.getObject("personId", java.util.UUID.class),
                 resultSet.getString("personName"),
                 resultSet.getString("personSurname")));
-        for (int i = 0; i < localPersonList.size() - 1; i++) {
-            for (int j = localPersonList.size() - 1; j > i; j--) {
-                if (localPersonList.get(j).getId() == localPersonList.get(i).getId()) {
-                    localPersonList.remove(j);
-                }
-            }
+        if (localPersonList.isEmpty() || localPersonList.size() == 1) {
+            return localPersonList;
         }
         List<Person> personList = new ArrayList<>(localPersonList);
-        // разделить var sql
 
         var sql1 = """
                 SELECT * FROM public.persons_apartments
@@ -49,64 +45,33 @@ public class PersonDataService {
                 """;
         List<Persons_apartments> localPersonsApartments = jdbcTemplate.query(sql1, (resultSet, i) ->
                 new Persons_apartments(
-                        resultSet.getLong("person_id"),
-                        resultSet.getLong("apartment_id")));
-        List<Long> tempApartmentsId = new ArrayList<>(localPersonsApartments.size());
+                        resultSet.getObject("person_id", java.util.UUID.class),
+                        resultSet.getObject("apartment_id", java.util.UUID.class)));
+        if (localPersonsApartments.size() == 0) {
+            return personList;
+        }
+        List<UUID> tempApartmentsId = new ArrayList<>(localPersonsApartments.size());
 
-        int l = 0;
-        int m = 0;
-        int k = 0;
-        for (int i = 0; i < localPersonsApartments.size() - 1; i++) {
+        for (int i = 0; i < localPersonList.size(); i++) {
             if (!tempApartmentsId.isEmpty()) {
                 tempApartmentsId.clear();
             }
-
-            for (int j = localPersonsApartments.size() - 1; j > i; j--) {
-
-                if (localPersonList.get(i).getId() == localPersonsApartments.get(j).getPersonId()) {
+            for (int j = 0; j < localPersonsApartments.size(); j++) {
+                if (localPersonList.get(i).getId().equals(localPersonsApartments.get(j).getPersonId())) {
                     tempApartmentsId.add(localPersonsApartments.get(j).getApartmentId());
-                    localPersonsApartments.remove(localPersonsApartments.get(j));
-                }
-                k = j - 1;
-            }
-            if (localPersonList.get(i).getId() == localPersonsApartments.get(k).getPersonId()) {
-                tempApartmentsId.add(localPersonsApartments.get(i).getApartmentId());
-                personList.get(i).setApartmentsIds(tempApartmentsId.stream().toList());
-            }
-
-            if (k != 0) {
-                m = k - 1;
-            }
-
-            if (i != 0) {
-                l = i - 1;
-            }
-            if (i != 0) {
-                if (localPersonList.get(i).getId() == localPersonsApartments.get(m).getPersonId()) {
-                    tempApartmentsId.add(localPersonsApartments.get(l).getApartmentId());
-                    personList.get(i).setApartmentsIds(tempApartmentsId.stream().toList());
                 }
             }
-
+            if (!tempApartmentsId.isEmpty()) {
+                List<UUID> localSave = new ArrayList<>(tempApartmentsId);
+                personList.get(i).setApartmentsIds(localSave);
+            }
         }
-        if (!tempApartmentsId.isEmpty()) {
-            tempApartmentsId.clear();
-        }
-        if (localPersonList.get(l + 2).getId() == localPersonsApartments.get(localPersonsApartments.size() - 1).getPersonId()){
-            tempApartmentsId.add(localPersonsApartments.get(localPersonsApartments.size() - 1).getApartmentId());
-            personList.get(localPersonsApartments.size() - 1).setApartmentsIds(tempApartmentsId.stream().toList());
-        }
-        if (localPersonList.get(localPersonList.size() - 1).getId() == localPersonsApartments.get(localPersonsApartments.size() - 1).getPersonId()){
-            tempApartmentsId.add(localPersonsApartments.get(localPersonsApartments.size() - 1).getApartmentId());
-            personList.get(localPersonsApartments.size() - 1).setApartmentsIds(tempApartmentsId.stream().toList());
-        }
-
 
         return personList;
     }
 
     //return person with belonged apartments by id
-    public PersonsApartments selectPersonApartmentsById(long id) throws NotFoundException {
+    public PersonsApartments selectPersonApartmentsById(UUID id) throws NotFoundException {
         PersonsApartments personsApartment = new PersonsApartments();
         var sql = """
                 SELECT persons.name as personName, persons.surname as personSurname, apartments.id as apartmentsID
@@ -115,12 +80,12 @@ public class PersonDataService {
                 left join apartments on apartment_id = apartments.id
                 where persons.id = ?;
                 """;
-        List<Long> apartmentIds = jdbcTemplate.query(sql, (resultSet, i) -> {
+        List<UUID> apartmentIds = jdbcTemplate.query(sql, (resultSet, i) -> {
 
             personsApartment.setName(resultSet.getString("personName"));
             personsApartment.setSurname(resultSet.getString("personSurname"));
 
-            return resultSet.getLong("apartmentsID");
+            return resultSet.getObject("apartmentsID", java.util.UUID.class);
 
         }, id);
         personsApartment.setPersonsApartment(apartmentIds);
@@ -128,20 +93,56 @@ public class PersonDataService {
     }
 
     //returns data of every person from List
-    public List<Person> selectPersonsData(List<Long> personsIds) {
+    public List<Person> selectPersonsData(List<UUID> personsIds) {
 
         var sql = String.format("SELECT * FROM public.persons where id in (%s)",
                 personsIds.stream()
                         .map(v -> "?")
                         .collect(Collectors.joining(", ")));
 
-        return jdbcTemplate.query(
+        List<Person> localPersonList = jdbcTemplate.query(
                 sql, (resultSet, i) -> new Person(
-                        resultSet.getLong("id"),
+                        resultSet.getObject("id", java.util.UUID.class),
                         resultSet.getString("name"),
                         resultSet.getString("surname")
                 ), personsIds.toArray());
+        if (localPersonList.isEmpty() || localPersonList.size() == 1) {
+            return localPersonList;
+        }
 
+        List<Person> personList = new ArrayList<>(localPersonList);
+
+        var sql1 = String.format("SELECT person_id as personId, apartment_id as apartmentId FROM public.persons_apartments WHERE (person_id) IN (%s)",
+                personsIds.stream()
+                        .map(v -> "?")
+                        .collect(Collectors.joining(", ")));
+
+        List<Persons_apartments> localPersonsApartments = jdbcTemplate.query(
+                sql1, (resultSet, i) -> new Persons_apartments(
+                        resultSet.getObject("personId", java.util.UUID.class),
+                        resultSet.getObject("apartmentId", java.util.UUID.class)),
+                personsIds.toArray());
+        if (localPersonsApartments.size() == 0) {
+            return localPersonList;
+        }
+
+        List<UUID> tempApartmentsId = new ArrayList<>(localPersonsApartments.size());
+
+        for (int i = 0; i < localPersonList.size(); i++) {
+            if (!tempApartmentsId.isEmpty()) {
+                tempApartmentsId.clear();
+            }
+            for (int j = 0; j < localPersonsApartments.size(); j++) {
+                if (localPersonList.get(i).getId().equals(localPersonsApartments.get(j).getPersonId())) {
+                    tempApartmentsId.add(localPersonsApartments.get(j).getApartmentId());
+                }
+            }
+            if (!tempApartmentsId.isEmpty()) {
+                List<UUID> localSave = new ArrayList<>(tempApartmentsId);
+                personList.get(i).setApartmentsIds(localSave);
+            }
+        }
+        return personList;
     }
 
     //return person with count of apartments
@@ -161,7 +162,7 @@ public class PersonDataService {
 
     //delete person
     //cascade delete binds
-    public HttpStatus deletePersonById(long id) {
+    public HttpStatus deletePersonById(UUID id) {
         var sql = """
                 DELETE FROM public."persons"
                 WHERE id = ?;
@@ -171,7 +172,7 @@ public class PersonDataService {
     }
 
     //delete bind
-    public HttpStatus deleteBind(Long personId, Long apartmentId) {
+    public HttpStatus deleteBind(UUID personId, UUID apartmentId) {
         var sql = """
                 DELETE FROM public.persons_apartments
                 WHERE person_id = ? and apartment_id = ?
@@ -183,20 +184,32 @@ public class PersonDataService {
     //add new person
     //add List of apartmentsIds!
     public HttpStatus insertPerson(Person person) {
+        if (person.getName() == null || person.getSurname() == null) {
+            return HttpStatus.BAD_REQUEST;
+        }
         var sql = """
                 INSERT INTO public."persons"(id, name, surname)
-                VALUES (?, ?, ?);
+                VALUES (uuid_generate_v4(), ?, ?)
+                RETURNING id;
                 """;
-        jdbcTemplate.update(sql, person.getId(), person.getName(), person.getSurname());
+        var sql1 = """
+                INSERT INTO public."persons"(id, name, surname)
+                VALUES (uuid_generate_v4(), ?, ?)
+                """;
         if (person.getApartmentsIds() != null) {
-            PersonsBindList bindList = new PersonsBindList(person.getId(), person.getApartmentsIds());
+            List<PersonsBindList> personsBindList = jdbcTemplate.query(sql, (resultSet, i) ->
+                    new PersonsBindList(resultSet.getObject("id", java.util.UUID.class),
+                            person.getApartmentsIds()), person.getName(), person.getSurname());
+            PersonsBindList bindList = new PersonsBindList(personsBindList.get(0).getPersonId(), personsBindList.get(0).getApartmentsIds());
             insertListOfBinds(bindList);
+        } else {
+            jdbcTemplate.update(sql1, person.getName(), person.getSurname());
         }
         return HttpStatus.CREATED;
     }
 
     //add new bind
-    public HttpStatus insertSingleBind(Long personId, Long apartmentId) {
+    public HttpStatus insertSingleBind(UUID personId, UUID apartmentId) {
         var sql = """
                 INSERT INTO public.persons_apartments(person_id, apartment_id)
                 VALUES (?, ?);
@@ -207,13 +220,13 @@ public class PersonDataService {
 
     //add new ListBind
     public HttpStatus insertListOfBinds(PersonsBindList bindList) {
-        List<Long> localListIds = new ArrayList<>();
-        for (int i = 0; i < bindList.getApartmentsId().size(); i++) {
+        List<UUID> localListIds = new ArrayList<>();
+        for (int i = 0; i < bindList.getApartmentsIds().size(); i++) {
             localListIds.add(bindList.getPersonId());
-            localListIds.add(bindList.getApartmentsId().get(i));
+            localListIds.add(bindList.getApartmentsIds().get(i));
         }
         var sql = String.format("INSERT INTO public.persons_apartments(person_id, apartment_id)" + "VALUES %s",
-                bindList.getApartmentsId().stream()
+                bindList.getApartmentsIds().stream()
                         .map(v -> "(?, ?)")
                         .collect(Collectors.joining(", ")));
 
@@ -222,14 +235,14 @@ public class PersonDataService {
     }
 
     //update person
-    public Person updatePerson(Person person, long id) {
+    public HttpStatus updatePerson(Person person, UUID id) {
         var sql = """
                 UPDATE public."persons"
                 SET name = ?, surname = ?
                 WHERE id = ?;
                 """;
         jdbcTemplate.update(sql, person.getName(), person.getSurname(), id);
-        return person;
+        return HttpStatus.CREATED;
     }
 
 }
